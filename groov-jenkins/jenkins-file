@@ -1,48 +1,22 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Build') {
-            steps {
-                git url: 'https://github.com/torneseumprogramador/pipeline-dev-jenkins-desafio-devops.git', branch: 'main'
-                sh 'cd /var/lib/jenkins/workspace/pipeline-infra-fragmento/contruindo_ambiente && ./deploy.sh'
-            }
-        }
-        stage('TEST') {
-            steps {
-                echo 'Fazendo teste da imagem'
-                sh 'cd /var/lib/jenkins/workspace/pipeline-infra-fragmento/teste && ./verifica_ambiente.sh'
-            }
-        }
-        stage('Criando AMI customizada') {
-            steps {
-                echo 'Gerando AMI'
-                sh 'cd /var/lib/jenkins/workspace/pipeline-infra-fragmento/gerando_ami && ./exec.sh'
-            }
-        }
-        stage('Destruir ambiente') {
-            steps {
-                echo 'Destruindo'
-                sh 'cd /var/lib/jenkins/workspace/pipeline-infra-fragmento/contruindo_ambiente && ./destroy.sh'
-            }
-        }
+    parameters {
+        string(name: 'TF_VAR_ami', defaultValue: '', description: 'Digite o ID da imagem inicial para provisionar o ambiente')
+        string(name: 'TF_VAR_instance_type', defaultValue: 't2.micro', description: 'Tamanho da instância')
+        choice(name: 'TF_VAR_instance_type', choices: ['t2.micro', 't2.mano', 't2.large'])
     }
-}
-
-
-pipeline {
-    agent any
-
 
     stages {
-        stage('Build') {
+        stage('Clone App') {
             steps {
-                echo 'Fazendo build..'
+                git url: 'https://github.com/Didox/spring-app-validar-cpf-treinamento-concrete.git', branch: 'master'
             }
         }
         stage('TDD') {
             steps {
-                echo 'Rodando teste de unidade....'
+                echo 'Clone aplicação teste'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-desafio-devops/ && mvn package'
             }
         }
         stage('Push hub Docker') {
@@ -53,6 +27,8 @@ pipeline {
         stage('DEV') {
             steps {
                 echo 'deploy em dev....'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-desafio-devops/ && rm -rf pipeline-dev-jenkins-desafio-devops_dev && git clone https://github.com/torneseumprogramador/pipeline-dev-jenkins-desafio-devops.git pipeline-dev-jenkins-desafio-devops_dev'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-desafio-devops/pipeline-dev-jenkins-desafio-devops_dev/contruindo_ambiente && TF_VAR_ambiente=dev ./deploy.sh'
             }
         }
         stage('BDD') {
@@ -60,14 +36,20 @@ pipeline {
                 echo 'Rodando teste de comportamento....'
             }
         }
+
         stage('STAGE') {
             steps {
                 echo 'deploy em stage....'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-desafio-devops/ && rm -rf pipeline-dev-jenkins-desafio-devops_stage && git clone https://github.com/torneseumprogramador/pipeline-dev-jenkins-desafio-devops.git pipeline-dev-jenkins-desafio-devops_stage'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-desafio-devops/pipeline-dev-jenkins-desafio-devops_stage/contruindo_ambiente && TF_VAR_ambiente=stage ./deploy.sh'
             }
         }
+
         stage('PROD') {
             steps {
-                echo 'deploy em produção....'
+                echo 'deploy em prod....'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-desafio-devops/ && rm -rf pipeline-dev-jenkins-desafio-devops_prod && git clone https://github.com/torneseumprogramador/pipeline-dev-jenkins-desafio-devops.git pipeline-dev-jenkins-desafio-devops_prod'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-desafio-devops/pipeline-dev-jenkins-desafio-devops_prod/contruindo_ambiente && TF_VAR_ambiente=prod ./deploy.sh'
             }
         }
     }

@@ -2,21 +2,33 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_instance" "vm_fragmento" {
-  ami           = "ami-09e67e426f25ce0d7"
-  instance_type = "t2.micro"
+variable "ami" {
+  type = string
+}
+
+variable "ambiente" {
+  type = string
+}
+
+variable "instance_type" {
+  type = string
+}
+
+resource "aws_instance" "vm_dev" {
+  ami           = var.ami
+  instance_type = var.instance_type
   key_name      = "chave-publica-computador-reserva"
   tags = {
-    Name = "vm-fragmento"
+    Name = var.ambiente
   }
   vpc_security_group_ids = [
-    aws_security_group.fragmento.id
+    aws_security_group.dev.id
   ]
 }
 
-resource "aws_security_group" "fragmento" {
-  name        = "acessos_fragmento"
-  description = "acessos_fragmento inbound traffic"
+resource "aws_security_group" "dev" {
+  name        = "acessos_dev"
+  description = "acessos_dev inbound traffic"
 
   ingress = [
     {
@@ -58,13 +70,13 @@ resource "aws_security_group" "fragmento" {
   ]
 
   tags = {
-    Name = "fragmento"
+    Name = "dev"
   }
 }
 
-output "vm_fragmento" {
+output "vm_dev" {
   value = [
-    "id: ${aws_instance.vm_fragmento.id}",
-    "public_dns: ${aws_instance.vm_fragmento.public_dns}",
+    "id: ${aws_instance.vm_dev.id}",
+    "public_dns: ${aws_instance.vm_dev.public_dns}",
   ]
 }
