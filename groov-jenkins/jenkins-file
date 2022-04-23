@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                git url: 'https://github.com/torneseumprogramador/pipeline-dev-jenkins-desafio-devops.git', branch: 'main'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-infra-fragmento/contruindo_ambiente && ./deploy.sh'
+            }
+        }
+        stage('TEST') {
+            steps {
+                echo 'Fazendo teste da imagem'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-infra-fragmento/teste && ./verifica_ambiente.sh'
+            }
+        }
+        stage('Criando AMI customizada') {
+            steps {
+                echo 'Gerando AMI'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-infra-fragmento/gerando_ami && ./exec.sh'
+            }
+        }
+        stage('Destruir ambiente') {
+            steps {
+                echo 'Destruindo'
+                sh 'cd /var/lib/jenkins/workspace/pipeline-infra-fragmento/contruindo_ambiente && ./destroy.sh'
+            }
+        }
+    }
+}
+
+
+pipeline {
+    agent any
+
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Fazendo build..'
+            }
+        }
+        stage('TDD') {
+            steps {
+                echo 'Rodando teste de unidade....'
+            }
+        }
+        stage('Push hub Docker') {
+            steps {
+                echo 'Push fragmento...'
+            }
+        }
+        stage('DEV') {
+            steps {
+                echo 'deploy em dev....'
+            }
+        }
+        stage('BDD') {
+            steps {
+                echo 'Rodando teste de comportamento....'
+            }
+        }
+        stage('STAGE') {
+            steps {
+                echo 'deploy em stage....'
+            }
+        }
+        stage('PROD') {
+            steps {
+                echo 'deploy em produção....'
+            }
+        }
+    }
+}

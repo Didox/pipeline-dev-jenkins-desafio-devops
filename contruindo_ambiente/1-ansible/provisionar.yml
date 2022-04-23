@@ -1,0 +1,50 @@
+- hosts:
+  - all
+  become: yes
+  
+  tasks:
+    - name: "Roda: sudo apt update"
+      apt:
+        upgrade: yes
+        update_cache: yes
+
+    - name: "Instala pacotes"
+      apt:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - nginx
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gpg-agent
+        - software-properties-common
+    
+    - name: add docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: add docker apt repo
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: install docker
+      apt:
+        update_cache: yes
+        state: latest
+        name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+
+    - shell: "docker ps"
+      register: ps
+    - debug:
+        msg: " '{{ ps.stdout_lines }}' "
+
+    - shell: "curl localhost"
+      register: ps
+    - debug:
+        msg: " '{{ ps.stdout_lines }}' "
